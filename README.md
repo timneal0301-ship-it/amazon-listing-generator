@@ -5,4 +5,4 @@
 2. ABA关键词数据.csv / .xlsx / .xls
 3. 竞品Listing文本.txt / .xlsx / .xls
 4. 本品属性表.txt / .xlsx / .xls
-一键生成listing标题5点文案。
+一键生成listing标题/5点 /描述/Search Terms 文案。
