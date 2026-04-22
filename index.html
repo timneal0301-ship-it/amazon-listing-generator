@@ -1,0 +1,1976 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>亚马逊 Listing 一键生成器 V2.1.1 - Poe API版（支持 XLSX 上传 + Bullet 标题冒号格式）</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#121933;
+      --panel2:#182246;
+      --line:#2a376b;
+      --text:#eef3ff;
+      --muted:#a7b3d9;
+      --accent:#6f95ff;
+      --ok:#91efb3;
+      --warn:#ffd27a;
+      --danger:#ff8f8f;
+      --radius:16px;
+      --shadow:0 10px 30px rgba(0,0,0,.28);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",Arial,sans-serif;
+      background:
+        radial-gradient(circle at top right, rgba(111,149,255,.14), transparent 26%),
+        radial-gradient(circle at top left, rgba(145,239,179,.08), transparent 22%),
+        var(--bg);
+      color:var(--text);
+    }
+    .wrap{max-width:1600px;margin:0 auto;padding:20px}
+    .hero,.card{
+      background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+    }
+    .hero{padding:20px;margin-bottom:18px}
+    .hero h1{margin:0 0 8px;font-size:28px}
+    .hero p{margin:0;color:var(--muted);font-size:14px;line-height:1.7}
+    .grid{display:grid;grid-template-columns:1.08fr .92fr;gap:18px}
+    @media (max-width:1150px){.grid{grid-template-columns:1fr}}
+    .hd{
+      display:flex;justify-content:space-between;align-items:center;gap:12px;
+      padding:14px 16px;border-bottom:1px solid var(--line);
+      background:rgba(255,255,255,.02);flex-wrap:wrap;
+    }
+    .hd h2,.hd h3{margin:0;font-size:18px}
+    .bd{padding:16px}
+    .subgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    @media (max-width:980px){.subgrid{grid-template-columns:1fr}}
+    .field{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+    label{color:var(--muted);font-size:13px}
+    input[type="text"],input[type="password"],input[type="number"],textarea,select{
+      width:100%;border:1px solid var(--line);background:var(--panel);color:var(--text);
+      border-radius:12px;padding:12px 14px;font-size:14px;outline:none;transition:.2s;
+    }
+    textarea{min-height:120px;resize:vertical}
+    input:focus,textarea:focus,select:focus{
+      border-color:var(--accent);box-shadow:0 0 0 3px rgba(111,149,255,.18);
+    }
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .btn{
+      appearance:none;border:1px solid var(--line);background:var(--panel2);color:var(--text);
+      padding:10px 14px;border-radius:12px;cursor:pointer;font-size:14px;transition:.2s;
+    }
+    .btn:hover{transform:translateY(-1px)}
+    .btn.primary{background:linear-gradient(180deg,#3f6dff,#2f56d8);border-color:#587cf0}
+    .btn.ghost{background:transparent}
+    .btn.success{background:linear-gradient(180deg,#127c46,#0e6438);border-color:#1a9959}
+    .btn.warn{background:linear-gradient(180deg,#8f6515,#75510f);border-color:#c18b2c}
+    .btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
+    .drop{
+      border:1.5px dashed var(--line);background:rgba(255,255,255,.02);border-radius:14px;
+      padding:14px;text-align:center;color:var(--muted);transition:.2s;
+    }
+    .drop.dragover{border-color:var(--accent);background:rgba(111,149,255,.08);color:var(--text)}
+    .chips{display:flex;flex-wrap:wrap;gap:8px}
+    .chip{
+      font-size:12px;color:var(--muted);padding:6px 10px;border-radius:999px;
+      border:1px solid var(--line);background:rgba(255,255,255,.03);
+    }
+    .status{
+      display:inline-flex;align-items:center;gap:8px;font-size:13px;padding:8px 10px;
+      border-radius:12px;border:1px solid var(--line);color:var(--muted);background:rgba(255,255,255,.03);
+    }
+    .status.ok{color:var(--ok)}
+    .status.warn{color:var(--warn)}
+    .status.err{color:var(--danger)}
+    .file-list{display:grid;gap:10px;margin-top:12px}
+    .file-item{
+      display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;
+      border:1px solid var(--line);border-radius:12px;background:var(--panel);
+    }
+    .file-meta{min-width:0}
+    .file-name{font-size:14px;word-break:break-all}
+    .file-desc{font-size:12px;color:var(--muted)}
+    .table{
+      display:grid;grid-template-columns:220px 1fr;border:1px solid var(--line);
+      border-radius:12px;overflow:hidden;
+    }
+    @media (max-width:760px){.table{grid-template-columns:1fr}}
+    .cell{
+      padding:10px 12px;border-bottom:1px solid var(--line);font-size:13px;
+      background:rgba(255,255,255,.02);
+    }
+    .cell:nth-child(odd){background:rgba(255,255,255,.03);color:var(--muted)}
+    .cell:last-child,.cell:nth-last-child(2){border-bottom:none}
+    .result{margin-top:18px}
+    .section{
+      border:1px solid var(--line);border-radius:14px;overflow:hidden;
+      background:rgba(255,255,255,.02);margin-bottom:16px;
+    }
+    .section .shd{
+      display:flex;justify-content:space-between;align-items:center;gap:10px;
+      padding:12px 14px;border-bottom:1px solid var(--line);
+      background:rgba(255,255,255,.02);flex-wrap:wrap;
+    }
+    .section .sbd{padding:14px}
+    .output{
+      white-space:pre-wrap;word-break:break-word;background:var(--panel);
+      border:1px solid var(--line);border-radius:12px;padding:14px;min-height:70px;
+      font-size:14px;line-height:1.65;
+    }
+    .html-output{white-space:pre-wrap}
+    .small{font-size:12px;color:var(--muted)}
+    .footer{margin-top:10px;color:var(--muted);font-size:12px;line-height:1.7}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
+    .counter-wrap{display:grid;grid-template-columns:1fr;gap:10px}
+    .counter-item{
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:12px;
+    }
+    .counter-head{
+      display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;
+    }
+    .counter-title{font-size:13px;color:var(--muted)}
+    .counter-num{font-size:13px}
+    .counter-num.ok{color:var(--ok)}
+    .counter-num.warn{color:var(--warn)}
+    .counter-num.err{color:var(--danger)}
+    .bar{
+      width:100%;height:8px;border-radius:999px;background:rgba(255,255,255,.06);overflow:hidden;
+    }
+    .bar > span{
+      display:block;height:100%;width:0%;
+      background:linear-gradient(90deg,#4d79ff,#87a5ff);transition:.25s;
+    }
+    .bar > span.warn{background:linear-gradient(90deg,#9a6a14,#e9b448)}
+    .bar > span.err{background:linear-gradient(90deg,#a93131,#ff8f8f)}
+    .lang-rules,.cfg-panel{
+      border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:12px;
+      line-height:1.7;font-size:13px;color:var(--muted);
+    }
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    @media (max-width:980px){.two-col{grid-template-columns:1fr}}
+    .mini-tag{
+      display:inline-block;margin-right:6px;margin-bottom:6px;padding:4px 8px;border-radius:999px;
+      border:1px solid var(--line);font-size:12px;color:var(--muted);background:rgba(255,255,255,.03);
+    }
+    .triple{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+    @media (max-width:1200px){.triple{grid-template-columns:1fr}}
+    .ab-tabs{display:flex;gap:8px;flex-wrap:wrap}
+    .tab-btn.active{border-color:#7da0ff;background:rgba(111,149,255,.16);color:#fff}
+    .dupe-list{
+      border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:12px;line-height:1.8;font-size:13px;
+    }
+    .stream-box{
+      min-height:160px;max-height:380px;overflow:auto;
+      white-space:pre-wrap;word-break:break-word;
+      background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;
+      font-size:14px;line-height:1.65;
+    }
+    .cfg-table{
+      width:100%;border-collapse:collapse;font-size:13px;
+    }
+    .cfg-table th,.cfg-table td{
+      border:1px solid var(--line);padding:8px 10px;text-align:left;
+    }
+    .cfg-table th{color:var(--muted);background:rgba(255,255,255,.03)}
+    .inline-grid{
+      display:grid;grid-template-columns:repeat(5,1fr);gap:10px;
+    }
+    @media (max-width:1100px){.inline-grid{grid-template-columns:1fr 1fr}}
+    @media (max-width:640px){.inline-grid{grid-template-columns:1fr}}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <h1>亚马逊 Listing 一键生成器 V2.1.1</h1>
+      <p>
+        固定对接 <strong>Poe API</strong>，支持<strong>流式输出</strong>、<strong>A/B 两版同时生成</strong>、
+        <strong>原生 xlsx 导出</strong>、<strong>Search Terms 与 Title/Bullet 去重比对</strong>、
+        <strong>站点+类目可配置限制</strong>、<strong>多轮重写</strong>、<strong>上传 xlsx/xls</strong>，
+        并新增 <strong>Bullet 必须按“核心卖点标题 + 冒号 + 说明”</strong> 的格式输出，同时支持
+        <strong>尽量接近字符上限</strong> 的生成策略。
+      </p>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="hd">
+          <h2>输入配置</h2>
+          <div class="chips">
+            <span class="chip">流式输出</span>
+            <span class="chip">A/B 双版本</span>
+            <span class="chip">xlsx 导出</span>
+            <span class="chip">多轮重写</span>
+            <span class="chip">配置化限制表</span>
+            <span class="chip">支持上传 xlsx/xls</span>
+            <span class="chip">Bullet 标题 + 冒号格式</span>
+          </div>
+        </div>
+        <div class="bd">
+          <div class="subgrid">
+            <div>
+              <div class="field">
+                <label for="brand">品牌名</label>
+                <input id="brand" type="text" placeholder="例如：Auralis" />
+              </div>
+
+              <div class="field">
+                <label for="store">店铺 / 项目名（可选）</label>
+                <input id="store" type="text" placeholder="例如：US Home Storage Project" />
+              </div>
+
+              <div class="field">
+                <label for="language">输出语言</label>
+                <select id="language">
+                  <option value="English" selected>英文 English</option>
+                  <option value="German">德语 Deutsch</option>
+                  <option value="French">法语 Français</option>
+                  <option value="Italian">意大利语 Italiano</option>
+                  <option value="Spanish">西班牙语 Español</option>
+                  <option value="Arabic (Saudi Arabia)">沙特阿拉伯阿拉伯语 العربية (السعودية)</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="market">亚马逊站点</label>
+                <select id="market">
+                  <option value="US" selected>美国站 US</option>
+                  <option value="UK">英国站 UK</option>
+                  <option value="DE">德国站 DE</option>
+                  <option value="FR">法国站 FR</option>
+                  <option value="IT">意大利站 IT</option>
+                  <option value="ES">西班牙站 ES</option>
+                  <option value="SA">沙特站 SA</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="category">类目</label>
+                <select id="category">
+                  <option value="default" selected>通用 default</option>
+                  <option value="home">家居收纳 home</option>
+                  <option value="office">办公用品 office</option>
+                  <option value="beauty">美妆 beauty</option>
+                  <option value="kitchen">厨房 kitchen</option>
+                  <option value="pet">宠物 pet</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="modelName">Poe 模型名</label>
+                <input id="modelName" type="text" value="gpt-5.4" />
+              </div>
+            </div>
+
+            <div>
+              <div class="field">
+                <label>上传项目文件</label>
+                <div id="dropzone" class="drop">
+                  拖拽文件到这里，或点击下方选择文件
+                  <div class="small" style="margin-top:8px;">
+                    支持上传：<br />
+                    1. 竞品出单词报告.csv / .xlsx / .xls<br />
+                    2. ABA关键词数据.csv / .xlsx / .xls<br />
+                    3. 竞品Listing文本.txt / .xlsx / .xls<br />
+                    4. 本品属性表.txt / .xlsx / .xls
+                  </div>
+                </div>
+                <div class="row" style="margin-top:10px;">
+                  <input id="fileInput" type="file" multiple accept=".csv,.txt,.xlsx,.xls,text/plain,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+                </div>
+                <div id="fileList" class="file-list"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="subgrid">
+            <div class="field">
+              <label for="customNotes">附加要求</label>
+              <textarea id="customNotes" placeholder="例如：标题控制在180字符内；避免过度营销；偏重车载安全记录场景；突出双录、夜视、GPS、停车监控；语气更本地化。"></textarea>
+            </div>
+            <div class="field">
+              <label for="extraBlacklist">自定义违禁词（每行一个）</label>
+              <textarea id="extraBlacklist" placeholder="例如：best dash cam&#10;accident proof&#10;100% safe"></textarea>
+            </div>
+          </div>
+
+          <div class="inline-grid">
+            <div class="field">
+              <label for="useStreaming">输出方式</label>
+              <select id="useStreaming">
+                <option value="yes" selected>流式输出</option>
+                <option value="no">普通输出</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="abMode">生成版本</label>
+              <select id="abMode">
+                <option value="ab" selected>A/B 双版本</option>
+                <option value="single">仅单版本</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="temperature">创造性</label>
+              <input id="temperature" type="number" min="0" max="2" step="0.1" value="0.4" />
+            </div>
+            <div class="field">
+              <label for="rewriteTarget">重写目标</label>
+              <select id="rewriteTarget">
+                <option value="title">标题重写</option>
+                <option value="bullets">Bullet 重写</option>
+                <option value="description">Description 重写</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="bulletDensity">Bullet 长度策略</label>
+              <select id="bulletDensity">
+                <option value="full" selected>尽量接近上限</option>
+                <option value="balanced">平衡模式</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row">
+            <button id="buildPromptBtn" class="btn">生成 Prompt 预览</button>
+            <button id="runBtn" class="btn primary">调用 Poe 生成 Listing</button>
+            <button id="rewriteBtn" class="btn warn">执行多轮重写</button>
+            <button id="compressTermsBtn" class="btn">压缩 Search Terms</button>
+            <button id="demoBtn" class="btn">加载演示数据</button>
+            <button id="clearBtn" class="btn ghost">清空</button>
+          </div>
+
+          <div class="footer">
+            固定调用：
+            <span class="mono">POST https://api.poe.com/v1/chat/completions</span><br />
+            如果浏览器环境存在跨域或网关限制，建议改为自建后端代理。
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="hd">
+          <h2>Poe API 与规则配置</h2>
+          <span id="statusTag" class="status">等待配置</span>
+        </div>
+        <div class="bd">
+          <div class="field">
+            <label>API Base URL</label>
+            <input type="text" value="https://api.poe.com/v1" disabled />
+          </div>
+          <div class="field">
+            <label>Endpoint</label>
+            <input type="text" value="/chat/completions" disabled />
+          </div>
+          <div class="field">
+            <label for="apiKey">POE API Key</label>
+            <input id="apiKey" type="password" placeholder="输入你的 POE API Key" />
+          </div>
+
+          <div class="field">
+            <label>当前站点+类目字符限制</label>
+            <div id="limitSummary" class="lang-rules"></div>
+          </div>
+
+          <div class="field">
+            <label>当前语言本地化规则</label>
+            <div id="languageRules" class="lang-rules"></div>
+          </div>
+
+          <div class="field">
+            <label>限制配置表</label>
+            <div class="cfg-panel">
+              <div class="small" style="margin-bottom:8px;">可在代码中的 LIMIT_CONFIG 对象继续扩展。</div>
+              <div style="overflow:auto;">
+                <table class="cfg-table" id="cfgTable"></table>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:14px;" class="table">
+            <div class="cell">本品属性表</div>
+            <div id="st-attr" class="cell">未读取</div>
+
+            <div class="cell">竞品Listing文本</div>
+            <div id="st-comp" class="cell">未读取</div>
+
+            <div class="cell">竞品出单词报告</div>
+            <div id="st-scene" class="cell">未读取</div>
+
+            <div class="cell">ABA关键词数据</div>
+            <div id="st-aba" class="cell">未读取</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card result">
+      <div class="hd">
+        <h2>结果输出</h2>
+        <div class="row">
+          <button id="copyAllBtn" class="btn">复制全部</button>
+          <button id="exportCsvBtn" class="btn success">导出 CSV</button>
+          <button id="exportXlsxBtn" class="btn success">导出 XLSX</button>
+          <button id="exportHtmlBtn" class="btn">导出 HTML</button>
+          <button id="exportJsonBtn" class="btn">导出 JSON</button>
+          <button id="downloadTxtBtn" class="btn">导出 TXT</button>
+        </div>
+      </div>
+      <div class="bd">
+
+        <div class="section">
+          <div class="shd"><h3>流式输出窗口</h3></div>
+          <div class="sbd">
+            <div id="streamOutput" class="stream-box"></div>
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div class="section">
+            <div class="shd"><h3>实时字符计数</h3></div>
+            <div class="sbd"><div id="counterWrap" class="counter-wrap"></div></div>
+          </div>
+
+          <div class="section">
+            <div class="shd"><h3>Search Terms 压缩预览</h3></div>
+            <div class="sbd"><div id="termsCompressedOutput" class="output"></div></div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="shd"><h3>Search Terms 与 Title/Bullet 去重比对</h3></div>
+          <div class="sbd"><div id="dupeCompareOutput" class="dupe-list"></div></div>
+        </div>
+
+        <div class="section">
+          <div class="shd">
+            <h3>结果版本切换</h3>
+            <div class="ab-tabs">
+              <button class="btn tab-btn active" data-version="A">版本 A</button>
+              <button class="btn tab-btn" data-version="B">版本 B</button>
+            </div>
+          </div>
+          <div class="sbd small">A/B 双版本模式下可切换查看；单版本模式下默认使用 A。</div>
+        </div>
+
+        <div class="triple">
+          <div class="section">
+            <div class="shd">
+              <h3>1A. Title</h3>
+              <span id="titleLiveCountA" class="mini-tag">0 / 0</span>
+            </div>
+            <div class="sbd"><div id="titleOutputA" class="output"></div></div>
+          </div>
+
+          <div class="section">
+            <div class="shd">
+              <h3>2A. 5 Bullet Points</h3>
+              <span id="bulletLiveCountA" class="mini-tag">0 / 0</span>
+            </div>
+            <div class="sbd"><div id="bulletOutputA" class="output"></div></div>
+          </div>
+
+          <div class="section">
+            <div class="shd">
+              <h3>4A. Search Terms</h3>
+              <span id="termsLiveCountA" class="mini-tag">0 / 0</span>
+            </div>
+            <div class="sbd"><div id="stOutputA" class="output"></div></div>
+          </div>
+        </div>
+
+        <div class="triple">
+          <div class="section">
+            <div class="shd"><h3>3A. Product Description（HTML）</h3></div>
+            <div class="sbd"><div id="descOutputA" class="output html-output"></div></div>
+          </div>
+
+          <div class="section">
+            <div class="shd"><h3>5A. 竞品分析洞察</h3></div>
+            <div class="sbd"><div id="insightOutputA" class="output"></div></div>
+          </div>
+
+          <div class="section">
+            <div class="shd"><h3>6A. 合规扫描结果</h3></div>
+            <div class="sbd"><div id="complianceOutputA" class="output"></div></div>
+          </div>
+        </div>
+
+        <div class="triple">
+          <div class="section">
+            <div class="shd">
+              <h3>1B. Title</h3>
+              <span id="titleLiveCountB" class="mini-tag">0 / 0</span>
+            </div>
+            <div class="sbd"><div id="titleOutputB" class="output"></div></div>
+          </div>
+
+          <div class="section">
+            <div class="shd">
+              <h3>2B. 5 Bullet Points</h3>
+              <span id="bulletLiveCountB" class="mini-tag">0 / 0</span>
+            </div>
+            <div class="sbd"><div id="bulletOutputB" class="output"></div></div>
+          </div>
+
+          <div class="section">
+            <div class="shd">
+              <h3>4B. Search Terms</h3>
+              <span id="termsLiveCountB" class="mini-tag">0 / 0</span>
+            </div>
+            <div class="sbd"><div id="stOutputB" class="output"></div></div>
+          </div>
+        </div>
+
+        <div class="triple">
+          <div class="section">
+            <div class="shd"><h3>3B. Product Description（HTML）</h3></div>
+            <div class="sbd"><div id="descOutputB" class="output html-output"></div></div>
+          </div>
+
+          <div class="section">
+            <div class="shd"><h3>5B. 竞品分析洞察</h3></div>
+            <div class="sbd"><div id="insightOutputB" class="output"></div></div>
+          </div>
+
+          <div class="section">
+            <div class="shd"><h3>6B. 合规扫描结果</h3></div>
+            <div class="sbd"><div id="complianceOutputB" class="output"></div></div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="shd"><h3>Prompt 预览</h3></div>
+          <div class="sbd"><div id="promptOutput" class="output"></div></div>
+        </div>
+
+        <div class="section">
+          <div class="shd"><h3>原始 API 响应</h3></div>
+          <div class="sbd"><div id="rawOutput" class="output"></div></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const $ = (id) => document.getElementById(id);
+
+      const API_BASE = "https://api.poe.com/v1";
+      const CHAT_COMPLETIONS_URL = API_BASE + "/chat/completions";
+
+      const LIMIT_CONFIG = {
+        US: {
+          default: { title: 200, bullet: 255, bulletsTotal: 1500, searchTerms: 249 },
+          home:    { title: 200, bullet: 250, bulletsTotal: 1450, searchTerms: 249 },
+          office:  { title: 180, bullet: 240, bulletsTotal: 1400, searchTerms: 249 },
+          beauty:  { title: 150, bullet: 220, bulletsTotal: 1250, searchTerms: 249 },
+          kitchen: { title: 180, bullet: 240, bulletsTotal: 1400, searchTerms: 249 },
+          pet:     { title: 180, bullet: 240, bulletsTotal: 1400, searchTerms: 249 }
+        },
+        UK: {
+          default: { title: 200, bullet: 255, bulletsTotal: 1500, searchTerms: 249 },
+          home:    { title: 195, bullet: 250, bulletsTotal: 1450, searchTerms: 249 },
+          office:  { title: 180, bullet: 240, bulletsTotal: 1400, searchTerms: 249 },
+          beauty:  { title: 150, bullet: 220, bulletsTotal: 1250, searchTerms: 249 },
+          kitchen: { title: 180, bullet: 240, bulletsTotal: 1400, searchTerms: 249 },
+          pet:     { title: 180, bullet: 240, bulletsTotal: 1400, searchTerms: 249 }
+        },
+        DE: {
+          default: { title: 200, bullet: 255, bulletsTotal: 1500, searchTerms: 249 },
+          home:    { title: 190, bullet: 250, bulletsTotal: 1450, searchTerms: 249 },
+          office:  { title: 175, bullet: 240, bulletsTotal: 1380, searchTerms: 249 },
+          beauty:  { title: 150, bullet: 210, bulletsTotal: 1220, searchTerms: 249 },
+          kitchen: { title: 175, bullet: 240, bulletsTotal: 1380, searchTerms: 249 },
+          pet:     { title: 175, bullet: 240, bulletsTotal: 1380, searchTerms: 249 }
+        },
+        FR: {
+          default: { title: 200, bullet: 255, bulletsTotal: 1500, searchTerms: 249 },
+          home:    { title: 190, bullet: 245, bulletsTotal: 1420, searchTerms: 249 },
+          office:  { title: 180, bullet: 235, bulletsTotal: 1360, searchTerms: 249 },
+          beauty:  { title: 150, bullet: 210, bulletsTotal: 1220, searchTerms: 249 },
+          kitchen: { title: 180, bullet: 235, bulletsTotal: 1360, searchTerms: 249 },
+          pet:     { title: 180, bullet: 235, bulletsTotal: 1360, searchTerms: 249 }
+        },
+        IT: {
+          default: { title: 200, bullet: 255, bulletsTotal: 1500, searchTerms: 249 },
+          home:    { title: 190, bullet: 245, bulletsTotal: 1420, searchTerms: 249 },
+          office:  { title: 180, bullet: 235, bulletsTotal: 1360, searchTerms: 249 },
+          beauty:  { title: 150, bullet: 210, bulletsTotal: 1220, searchTerms: 249 },
+          kitchen: { title: 180, bullet: 235, bulletsTotal: 1360, searchTerms: 249 },
+          pet:     { title: 180, bullet: 235, bulletsTotal: 1360, searchTerms: 249 }
+        },
+        ES: {
+          default: { title: 200, bullet: 255, bulletsTotal: 1500, searchTerms: 249 },
+          home:    { title: 190, bullet: 245, bulletsTotal: 1420, searchTerms: 249 },
+          office:  { title: 180, bullet: 235, bulletsTotal: 1360, searchTerms: 249 },
+          beauty:  { title: 150, bullet: 210, bulletsTotal: 1220, searchTerms: 249 },
+          kitchen: { title: 180, bullet: 235, bulletsTotal: 1360, searchTerms: 249 },
+          pet:     { title: 180, bullet: 235, bulletsTotal: 1360, searchTerms: 249 }
+        },
+        SA: {
+          default: { title: 200, bullet: 255, bulletsTotal: 1500, searchTerms: 249 },
+          home:    { title: 185, bullet: 235, bulletsTotal: 1350, searchTerms: 249 },
+          office:  { title: 175, bullet: 230, bulletsTotal: 1320, searchTerms: 249 },
+          beauty:  { title: 145, bullet: 205, bulletsTotal: 1180, searchTerms: 249 },
+          kitchen: { title: 175, bullet: 230, bulletsTotal: 1320, searchTerms: 249 },
+          pet:     { title: 175, bullet: 230, bulletsTotal: 1320, searchTerms: 249 }
+        }
+      };
+
+      const LANGUAGE_RULES = {
+        "English": [
+          "语气自然、清晰、直接，避免过度修饰。",
+          "优先使用英文站点常见购物搜索表达。",
+          "标题中高权重核心词尽量靠前。",
+          "Bullet 句式强调功能、场景、材质、结构。"
+        ],
+        "German": [
+          "德语更适合信息完整、结构清晰、参数严谨。",
+          "避免过度营销腔，偏理性表达。",
+          "允许自然复合词，但避免标题过长。",
+          "Search Terms 优先保留核心名词与高频变体。"
+        ],
+        "French": [
+          "法语表达应更自然流畅，避免生硬直译。",
+          "注意冠词、介词与属性搭配。",
+          "避免标题机械堆词。",
+          "Bullet 中保持阅读舒适度与专业感。"
+        ],
+        "Italian": [
+          "意大利语适合自然生活化表达。",
+          "强调功能与日常场景结合。",
+          "避免明显关键词堆叠。",
+          "Search Terms 优先用途词、近义词、核心名词。"
+        ],
+        "Spanish": [
+          "西语表达宜直观、生活化、易理解。",
+          "避免句子过长。",
+          "强调家庭、办公、整理等实用场景。",
+          "Search Terms 优先高相关短词。"
+        ],
+        "Arabic (Saudi Arabia)": [
+          "采用适合沙特站点的现代标准阿拉伯语。",
+          "表达自然，避免英文化直译。",
+          "强调消费者易理解的功能表达。",
+          "Search Terms 保留高相关核心名词和场景词。"
+        ]
+      };
+
+      const REQUIRED_HINTS = ["竞品出单词报告","ABA关键词数据","竞品Listing文本","本品属性表"];
+
+      const BUILTIN_BLACKLIST = [
+        "best seller","top rated","best selling","#1","hot item","popular choice",
+        "free shipping","free delivery","free gift","bonus","gift included",
+        "on sale","discount","% off","best price","lowest price","cheap",
+        "satisfaction guarantee","100% quality","money back","order now","buy now",
+        "amazon's choice","certified",
+        "cure","heal","treat","treatment","remedy","prevent","prevention","relief","relieve","stop pain",
+        "anti-virus","anti-flu","anti inflammatory","anti-inflammatory","fda approved","fda cleared",
+        "cancer","diabetes","arthritis",
+        "anti-bacterial","antibacterial","anti-microbial","antimicrobial","anti-fungal","antifungal",
+        "mold resistant","anti-dust mite","insect repellent","bug stop","disinfect","sanitize","sterilize",
+        "non-toxic","safe","healthy","harmless",
+        "eco-friendly","environmentally friendly","green","biodegradable","compostable","sustainable",
+        "velcro","onesie","hula hoop","chapstick","q-tip","popsicle",
+        "leave a review","feedback","newest version"
+      ];
+
+      const BRAND_RISK = ["nike","disney","apple","lego","iphone","samsung","sony","nintendo","dyson","stanley","yeti"];
+      const STOP_WORDS = [
+        "and","or","for","the","a","an","with","to","of","in","on","by","from","at","is",
+        "und","der","die","das","mit","für","von","zu","im","am",
+        "de","la","le","les","des","du","pour","avec","sur","dans",
+        "di","da","con","per","su","nel","nella",
+        "y","el","la","los","las","de","para","con","en","por",
+        "و","في","من","على","مع","الى","إلى","ال","عن"
+      ];
+      const EMOJI_REGEX = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu;
+
+      const state = {
+        files: {},
+        texts: {},
+        prompt: "",
+        rawStreamText: "",
+        activeVersion: "A",
+        result: {
+          A: { title:"", bullets:[], description:"", searchTerms:"", searchTermsCompressed:"", insights:"", compliance:"" },
+          B: { title:"", bullets:[], description:"", searchTerms:"", searchTermsCompressed:"", insights:"", compliance:"" }
+        },
+        raw: ""
+      };
+
+      function escapeHtml(str) {
+        return String(str || "")
+          .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+          .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+      }
+
+      function setStatus(text, cls="") {
+        const el = $("statusTag");
+        el.textContent = text;
+        el.className = "status " + cls;
+      }
+
+      function smartLines(str) {
+        return String(str || "").replace(/\r/g,"").trim().split(/\n+/).map(s => s.trim()).filter(Boolean);
+      }
+
+      function detectFileType(name) {
+        const low = name.toLowerCase();
+        if (low.includes("本品属性表")) return "attr";
+        if (low.includes("竞品listing文本")) return "competitor";
+        if (low.includes("竞品出单词报告")) return "scene";
+        if (low.includes("aba关键词数据")) return "aba";
+        return "unknown";
+      }
+
+      function getLimits() {
+        const market = $("market").value;
+        const category = $("category").value;
+        return (LIMIT_CONFIG[market] && LIMIT_CONFIG[market][category]) || LIMIT_CONFIG[market].default || LIMIT_CONFIG.US.default;
+      }
+
+      function getLanguageRules() {
+        return LANGUAGE_RULES[$("language").value] || LANGUAGE_RULES.English;
+      }
+
+      function renderRulesPanel() {
+        const limits = getLimits();
+        $("limitSummary").innerHTML = `
+          <div class="mini-tag">站点：${escapeHtml($("market").value)}</div>
+          <div class="mini-tag">类目：${escapeHtml($("category").value)}</div>
+          <div class="mini-tag">Title ≤ ${limits.title}</div>
+          <div class="mini-tag">单条 Bullet ≤ ${limits.bullet}</div>
+          <div class="mini-tag">5条 Bullet 总长 ≤ ${limits.bulletsTotal}</div>
+          <div class="mini-tag">Search Terms ≤ ${limits.searchTerms}</div>
+        `;
+        $("languageRules").innerHTML = getLanguageRules().map(x => `• ${escapeHtml(x)}`).join("<br>");
+        renderConfigTable();
+      }
+
+      function renderConfigTable() {
+        const market = $("market").value;
+        const conf = LIMIT_CONFIG[market];
+        const rows = Object.entries(conf).map(([cat, val]) => `
+          <tr>
+            <td>${escapeHtml(cat)}</td>
+            <td>${val.title}</td>
+            <td>${val.bullet}</td>
+            <td>${val.bulletsTotal}</td>
+            <td>${val.searchTerms}</td>
+          </tr>
+        `).join("");
+        $("cfgTable").innerHTML = `
+          <thead>
+            <tr>
+              <th>类目</th>
+              <th>Title</th>
+              <th>单条 Bullet</th>
+              <th>5条 Bullet 总长</th>
+              <th>Search Terms</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        `;
+      }
+
+      function getMergedBlacklist() {
+        const extra = smartLines(($("extraBlacklist").value || "").toLowerCase());
+        return Array.from(new Set([...BUILTIN_BLACKLIST, ...extra]));
+      }
+
+      function escapeRegExp(str) {
+        return String(str).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      }
+
+      function sanitizeText(text) {
+        let t = String(text || "");
+        t = t.replace(EMOJI_REGEX, "");
+        t = t.replace(/[★☆✓✔✦✧➤➜➥►●■◆♦]/g, "");
+        getMergedBlacklist().forEach(word => {
+          const re = new RegExp("\\b" + escapeRegExp(word) + "\\b", "ig");
+          t = t.replace(re, "");
+        });
+        BRAND_RISK.forEach(word => {
+          const re = new RegExp("\\b" + escapeRegExp(word) + "\\b", "ig");
+          t = t.replace(re, "");
+        });
+        return t.replace(/\s{2,}/g," ").trim();
+      }
+
+      function isExcelFile(file) {
+        const name = (file?.name || "").toLowerCase();
+        return name.endsWith(".xlsx") || name.endsWith(".xls");
+      }
+
+      function isTextLikeFile(file) {
+        const name = (file?.name || "").toLowerCase();
+        return name.endsWith(".txt") || name.endsWith(".csv");
+      }
+
+      function readTextFile(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result || ""));
+          reader.onerror = reject;
+          reader.readAsText(file, "utf-8");
+        });
+      }
+
+      function excelToText(file) {
+        return new Promise((resolve, reject) => {
+          if (typeof XLSX === "undefined") {
+            reject(new Error("XLSX 库未加载，无法解析 Excel 文件。"));
+            return;
+          }
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            try {
+              const data = e.target.result;
+              const workbook = XLSX.read(data, { type: "array" });
+              const sections = [];
+
+              workbook.SheetNames.forEach((sheetName, idx) => {
+                const sheet = workbook.Sheets[sheetName];
+                const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+
+                sections.push(`【工作表 ${idx + 1}: ${sheetName}】`);
+
+                if (!rows.length) {
+                  sections.push("（空表）", "");
+                  return;
+                }
+
+                rows.forEach((row, rowIndex) => {
+                  const cleanRow = (row || []).map(v => String(v ?? "").trim());
+                  if (!cleanRow.some(x => x !== "")) return;
+                  sections.push(cleanRow.join(" | "));
+                  if (rowIndex > 2000) return;
+                });
+
+                sections.push("");
+              });
+
+              resolve(sections.join("\n").trim());
+            } catch (err) {
+              reject(err);
+            }
+          };
+          reader.onerror = reject;
+          reader.readAsArrayBuffer(file);
+        });
+      }
+
+      async function readFileAuto(file) {
+        if (isExcelFile(file)) return await excelToText(file);
+        if (isTextLikeFile(file)) return await readTextFile(file);
+        return await readTextFile(file);
+      }
+
+      function renderFileList() {
+        const wrap = $("fileList");
+        wrap.innerHTML = "";
+        Object.values(state.files).forEach(file => {
+          const type = detectFileType(file.name);
+          const descMap = {
+            attr: "识别为：本品属性表",
+            competitor: "识别为：竞品Listing文本",
+            scene: "识别为：竞品出单词报告",
+            aba: "识别为：ABA关键词数据",
+            unknown: "未识别类型"
+          };
+          const ext = (file.name.split(".").pop() || "").toLowerCase();
+          const item = document.createElement("div");
+          item.className = "file-item";
+          item.innerHTML = `
+            <div class="file-meta">
+              <div class="file-name">${escapeHtml(file.name)}</div>
+              <div class="file-desc">${descMap[type]} · 文件类型：.${escapeHtml(ext)} · ${(file.size/1024).toFixed(1)} KB</div>
+            </div>
+            <button class="btn ghost" data-remove="${escapeHtml(file.name)}">移除</button>
+          `;
+          wrap.appendChild(item);
+        });
+        wrap.querySelectorAll("[data-remove]").forEach(btn => {
+          btn.addEventListener("click", () => {
+            delete state.files[btn.getAttribute("data-remove")];
+            renderFileList();
+            updateStatusTable();
+          });
+        });
+      }
+
+      function updateStatusTable() {
+        const names = Object.keys(state.files);
+        $("st-attr").textContent = names.some(n => n.includes("本品属性表")) ? "已上传" : "未读取";
+        $("st-comp").textContent = names.some(n => n.includes("竞品Listing文本")) ? "已上传" : "未读取";
+        $("st-scene").textContent = names.some(n => n.includes("竞品出单词报告")) ? "已上传" : "未读取";
+        $("st-aba").textContent = names.some(n => n.includes("ABA关键词数据")) ? "已上传" : "未读取";
+
+        const ok = $("apiKey").value.trim();
+        const count = REQUIRED_HINTS.filter(h => names.some(n => n.includes(h))).length;
+
+        if (ok && count === 4) setStatus("已就绪", "ok");
+        else if (ok || count > 0) setStatus("配置中", "warn");
+        else setStatus("等待配置", "");
+      }
+
+      async function loadAllFiles() {
+        state.texts = {};
+        for (const f of Object.values(state.files)) {
+          state.texts[f.name] = await readFileAuto(f);
+        }
+      }
+
+      function getFileTextByHint(hint) {
+        const key = Object.keys(state.texts).find(k => k.includes(hint));
+        return key ? state.texts[key] : "";
+      }
+
+      function getBulletLengthStrategy() {
+        const bulletDensity = $("bulletDensity").value;
+        if (bulletDensity === "full") {
+          return `
+# Bullet Length Strategy
+For the 5 Bullet Points:
+- Target 85% to 98% of the maximum allowed length for each bullet whenever possible.
+- Use supported product details to make each bullet rich and complete.
+- Expand naturally with concrete features, benefits, usage scenarios, included accessories, compatibility, installation details, and operating highlights when supported by the source data.
+- Avoid filler, repetition, and keyword stuffing.
+- Stay strictly within the character limit.
+- If a bullet cannot naturally reach near the limit, end it cleanly rather than padding.
+          `.trim();
+        }
+        return `
+# Bullet Length Strategy
+For the 5 Bullet Points:
+- Prioritize clarity, conversion, and readability.
+- Use the available character space well, but do not force length unnaturally.
+- Keep each bullet concise, informative, and natural.
+- Stay strictly within the character limit.
+        `.trim();
+      }
+
+      function buildPrompt(mode = "generate") {
+        const brand = $("brand").value.trim();
+        const store = $("store").value.trim();
+        const outputLanguage = $("language").value;
+        const market = $("market").value;
+        const category = $("category").value;
+        const modelName = $("modelName").value.trim() || "gpt-5.4";
+        const customNotes = $("customNotes").value.trim();
+        const limits = getLimits();
+        const localeRules = getLanguageRules().map((x,i)=>`${i+1}. ${x}`).join("\n");
+        const blacklist = getMergedBlacklist().join(", ");
+        const bulletLengthStrategy = getBulletLengthStrategy();
+
+        const attrText = getFileTextByHint("本品属性表");
+        const competitorText = getFileTextByHint("竞品Listing文本");
+        const sceneCsv = getFileTextByHint("竞品出单词报告");
+        const abaCsv = getFileTextByHint("ABA关键词数据");
+
+        const isAB = $("abMode").value === "ab";
+        const rewriteTarget = $("rewriteTarget").value;
+        const currentA = state.result.A;
+
+        const modeInstructions = mode === "rewrite"
+          ? `
+# Rewrite Mode
+You are not generating from scratch only. You must improve the existing draft for target: ${rewriteTarget}.
+Preserve facts and compliance.
+Improve readability, keyword placement, local naturalness, and marketplace fit.
+If rewriting bullets, keep exactly 5 bullets.
+If rewriting bullets, every bullet must follow this format: [Core Selling Point Title]: [Benefit-driven explanation].
+If rewriting bullets, aim to make each bullet as complete and information-dense as possible, approaching the allowed character limit without exceeding it.
+If rewriting title, keep it concise and within title limit.
+If rewriting description, keep valid simple HTML.
+Use the current version A draft below as rewrite base.
+
+[Current Draft Title]
+${currentA.title || "N/A"}
+
+[Current Draft Bullets]
+${(currentA.bullets || []).map((x,i)=>`${i+1}. ${x}`).join("\n") || "N/A"}
+
+[Current Draft Description]
+${currentA.description || "N/A"}
+
+[Current Draft Search Terms]
+${currentA.searchTerms || "N/A"}
+          `.trim()
+          : `
+# Generation Mode
+Generate ${isAB ? "TWO distinct versions (A and B)" : "ONE version (A only)"}.
+Version A should be balanced and conversion-oriented.
+Version B should be more keyword-forward but still readable and compliant.
+          `.trim();
+
+        const outputFormat = isAB && mode !== "rewrite" ? `
+# Output Format
+Return exactly in this structure:
+
+[Version A]
+[Title]
+...
+
+[Bullet Points]
+1. Core Selling Point Title: Explanation...
+2. Core Selling Point Title: Explanation...
+3. Core Selling Point Title: Explanation...
+4. Core Selling Point Title: Explanation...
+5. Core Selling Point Title: Explanation...
+
+[Product Description HTML]
+...
+
+[Search Terms]
+...
+
+[Competitor Insights]
+...
+
+[Compliance Self-check]
+...
+
+[Version B]
+[Title]
+...
+
+[Bullet Points]
+1. Core Selling Point Title: Explanation...
+2. Core Selling Point Title: Explanation...
+3. Core Selling Point Title: Explanation...
+4. Core Selling Point Title: Explanation...
+5. Core Selling Point Title: Explanation...
+
+[Product Description HTML]
+...
+
+[Search Terms]
+...
+
+[Competitor Insights]
+...
+
+[Compliance Self-check]
+...
+        `.trim() : `
+# Output Format
+Return exactly in this structure:
+
+[Version A]
+[Title]
+...
+
+[Bullet Points]
+1. Core Selling Point Title: Explanation...
+2. Core Selling Point Title: Explanation...
+3. Core Selling Point Title: Explanation...
+4. Core Selling Point Title: Explanation...
+5. Core Selling Point Title: Explanation...
+
+[Product Description HTML]
+...
+
+[Search Terms]
+...
+
+[Competitor Insights]
+...
+
+[Compliance Self-check]
+...
+        `.trim();
+
+        const prompt = `
+# Role
+You are an Amazon listing copywriting expert with deep knowledge of A9, COSMO, and Rufus ranking logic, plus Amazon compliance awareness and multilingual localization capability.
+
+# Objective
+Generate a high-conversion yet compliance-aware Amazon listing package based strictly on the uploaded files.
+
+# Output Language
+${outputLanguage}
+
+# Marketplace
+Amazon ${market}
+
+# Category
+${category}
+
+# Model Label
+${modelName}
+
+# Marketplace Character Limits
+- Title max: ${limits.title} characters
+- Each Bullet max: ${limits.bullet} characters
+- All 5 Bullets total max: ${limits.bulletsTotal} characters
+- Search Terms max: ${limits.searchTerms} characters
+
+# Localization Rules
+${localeRules}
+
+# Hard Constraints
+1. Do not invent unsupported claims or attributes.
+2. Do not use emoji.
+3. Do not use exaggerated, promotional, medical, pesticide, safety, or unverifiable environmental claims.
+4. Do not use competitor brand names.
+5. Avoid infringement-sensitive brand terms.
+6. Avoid excessive all caps.
+7. If data is incomplete, write conservatively.
+8. Do not reveal hidden reasoning.
+9. Final output must be operator-ready.
+10. Respect character limits strictly.
+11. Search Terms must be compressed and deduplicated.
+12. Avoid heavy duplication between Search Terms and Title/Bullets.
+13. Every bullet point must follow this format exactly: [Core Selling Point Title]: [Benefit-driven explanation].
+14. The text before the colon must be a short, clear selling-point label, not a full sentence.
+15. The text after the colon must explain features, benefits, and use scenarios in a natural, persuasive way.
+16. Keep all 5 bullet points structurally consistent in this same format.
+
+# Bullet Format Rules
+For all 5 Bullet Points:
+- Every bullet must follow this format exactly:
+  [Core Selling Point Title]: [Benefit-driven explanation]
+- The core selling point title must be short, clear, and easy to scan.
+- The explanation after the colon should include concrete product features, practical benefits, and usage scenarios whenever supported by the source data.
+- Keep the wording natural and persuasive.
+- Do not write bullets as plain paragraphs.
+- Do not omit the colon.
+- Keep all 5 bullets consistent in this same structure.
+
+${bulletLengthStrategy}
+
+# Restricted Terms Reference
+${blacklist}
+
+${modeInstructions}
+
+# Required Workflow
+Analyze these four files together:
+- Product attribute sheet
+- Competitor listings
+- Competitor search term report
+- ABA keyword data
+
+Then generate:
+1. Title
+2. 5 Bullet Points
+3. Product Description HTML
+4. Search Terms
+5. Competitor Insights
+6. Compliance Self-check
+
+${outputFormat}
+
+# Project Info
+Brand: ${brand || "N/A"}
+Store / Project: ${store || "N/A"}
+Marketplace: ${market}
+Category: ${category}
+Output Language: ${outputLanguage}
+Additional Notes: ${customNotes || "None"}
+
+# File 1: Product Attribute Sheet
+${attrText || "Not provided"}
+
+# File 2: Competitor Listings
+${competitorText || "Not provided"}
+
+# File 3: Competitor Search Terms Report
+${sceneCsv || "Not provided"}
+
+# File 4: ABA Keyword Data
+${abaCsv || "Not provided"}
+        `.trim();
+
+        state.prompt = prompt;
+        $("promptOutput").textContent = prompt;
+        return prompt;
+      }
+
+      async function callPoeApiNormal(prompt) {
+        const apiKey = $("apiKey").value.trim();
+        const model = $("modelName").value.trim() || "gpt-5.4";
+        const temperature = Number($("temperature").value || 0.4);
+
+        const payload = {
+          model,
+          messages: [{ role: "user", content: prompt }],
+          temperature,
+          stream: false
+        };
+
+        const resp = await fetch(CHAT_COMPLETIONS_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + apiKey
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const txt = await resp.text();
+        let data;
+        try { data = JSON.parse(txt); } catch { data = { raw_text: txt }; }
+
+        state.raw = JSON.stringify(data, null, 2);
+        $("rawOutput").textContent = state.raw;
+
+        if (!resp.ok) throw new Error("接口请求失败：HTTP " + resp.status + " " + txt);
+
+        const content = data?.choices?.[0]?.message?.content;
+        if (!content) throw new Error("响应中没有找到 content。");
+        return String(content);
+      }
+
+      async function callPoeApiStream(prompt) {
+        const apiKey = $("apiKey").value.trim();
+        const model = $("modelName").value.trim() || "gpt-5.4";
+        const temperature = Number($("temperature").value || 0.4);
+
+        const payload = {
+          model,
+          messages: [{ role: "user", content: prompt }],
+          temperature,
+          stream: true
+        };
+
+        const resp = await fetch(CHAT_COMPLETIONS_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + apiKey
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!resp.ok || !resp.body) {
+          const txt = await resp.text();
+          throw new Error("流式请求失败：HTTP " + resp.status + " " + txt);
+        }
+
+        const reader = resp.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+        let buffer = "";
+        let finalText = "";
+
+        state.rawStreamText = "";
+        $("streamOutput").textContent = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+
+          const parts = buffer.split("\n");
+          buffer = parts.pop() || "";
+
+          for (const line of parts) {
+            const trimmed = line.trim();
+            if (!trimmed) continue;
+            if (!trimmed.startsWith("data:")) continue;
+
+            const dataStr = trimmed.slice(5).trim();
+            if (dataStr === "[DONE]") continue;
+
+            try {
+              const data = JSON.parse(dataStr);
+              const delta = data?.choices?.[0]?.delta?.content ?? data?.choices?.[0]?.message?.content ?? "";
+              if (delta) {
+                finalText += delta;
+                state.rawStreamText = finalText;
+                $("streamOutput").textContent = finalText;
+              }
+            } catch {
+              if (dataStr) {
+                finalText += dataStr;
+                state.rawStreamText = finalText;
+                $("streamOutput").textContent = finalText;
+              }
+            }
+          }
+        }
+
+        if (!finalText.trim()) {
+          throw new Error("流式响应为空，可能该模型或网关未返回标准流。");
+        }
+
+        state.raw = finalText;
+        $("rawOutput").textContent = finalText;
+        return finalText;
+      }
+
+      async function requestCompletion(prompt) {
+        const useStreaming = $("useStreaming").value === "yes";
+        if (!useStreaming) return await callPoeApiNormal(prompt);
+
+        try {
+          return await callPoeApiStream(prompt);
+        } catch (err) {
+          $("streamOutput").textContent += "\n\n[流式失败，自动回退到普通模式]\n";
+          return await callPoeApiNormal(prompt);
+        }
+      }
+
+      function extractSection(text, startTag, endTags) {
+        const startIndex = text.indexOf(startTag);
+        if (startIndex === -1) return "";
+        const start = startIndex + startTag.length;
+        let end = text.length;
+        for (const tag of endTags) {
+          const idx = text.indexOf(tag, start);
+          if (idx !== -1 && idx < end) end = idx;
+        }
+        return text.slice(start, end).trim();
+      }
+
+      function parseSingleVersion(block) {
+        const title = extractSection(block, "[Title]", [
+          "[Bullet Points]","[Product Description HTML]","[Search Terms]","[Competitor Insights]","[Compliance Self-check]"
+        ]);
+        const bulletsRaw = extractSection(block, "[Bullet Points]", [
+          "[Product Description HTML]","[Search Terms]","[Competitor Insights]","[Compliance Self-check]"
+        ]);
+        const description = extractSection(block, "[Product Description HTML]", [
+          "[Search Terms]","[Competitor Insights]","[Compliance Self-check]"
+        ]);
+        const searchTerms = extractSection(block, "[Search Terms]", [
+          "[Competitor Insights]","[Compliance Self-check]"
+        ]);
+        const insights = extractSection(block, "[Competitor Insights]", [
+          "[Compliance Self-check]"
+        ]);
+        const compliance = extractSection(block, "[Compliance Self-check]", []);
+
+        const bullets = bulletsRaw
+          .split(/\n+/)
+          .map(x => x.trim())
+          .filter(Boolean)
+          .map(x => x.replace(/^\d+\.\s*/, "").trim());
+
+        return {
+          title: sanitizeText(title),
+          bullets: bullets.map(sanitizeText),
+          description: description.trim(),
+          searchTerms: sanitizeText(searchTerms),
+          searchTermsCompressed: "",
+          insights: sanitizeText(insights),
+          compliance: sanitizeText(compliance)
+        };
+      }
+
+      function parseModelOutput(raw) {
+        const hasB = raw.includes("[Version B]");
+        const partA = extractSection(raw, "[Version A]", ["[Version B]"]) || raw;
+        const partB = hasB ? extractSection(raw, "[Version B]", []) : "";
+
+        state.result.A = parseSingleVersion(partA);
+        state.result.B = hasB ? parseSingleVersion(partB) : { title:"", bullets:[], description:"", searchTerms:"", searchTermsCompressed:"", insights:"", compliance:"" };
+      }
+
+      function normalizeToken(token) {
+        return String(token || "")
+          .toLowerCase()
+          .trim()
+          .replace(/[.,;:，。；：/\\|()\[\]{}"'“”‘’!@#$%^&*+=?<>~`-]+/g, " ")
+          .replace(/\s+/g, " ")
+          .trim();
+      }
+
+      function compressSearchTerms(raw) {
+        const limits = getLimits();
+        const blacklist = getMergedBlacklist();
+        const brand = $("brand").value.trim().toLowerCase();
+
+        let text = String(raw || "")
+          .replace(/\n/g, " ")
+          .replace(/[，、；;|/]+/g, " ")
+          .replace(/\s+/g, " ")
+          .trim()
+          .toLowerCase();
+
+        const sourceTokens = text.split(/\s+/).filter(Boolean);
+        const cleanTokens = [];
+        const seen = new Set();
+
+        for (let tk of sourceTokens) {
+          tk = normalizeToken(tk);
+          if (!tk) continue;
+          if (STOP_WORDS.includes(tk)) continue;
+          if (brand && tk.includes(brand)) continue;
+          if (BRAND_RISK.includes(tk)) continue;
+          if (blacklist.includes(tk)) continue;
+          if (/^\d+$/.test(tk)) continue;
+          if (tk.length < 2 && !/[\u0600-\u06FF]/.test(tk)) continue;
+          if (seen.has(tk)) continue;
+          seen.add(tk);
+          cleanTokens.push(tk);
+        }
+
+        let compressed = cleanTokens.join(" ");
+        if (compressed.length > limits.searchTerms) {
+          const out = [];
+          let len = 0;
+          for (const tk of cleanTokens) {
+            const addLen = out.length ? tk.length + 1 : tk.length;
+            if (len + addLen > limits.searchTerms) break;
+            out.push(tk);
+            len += addLen;
+          }
+          compressed = out.join(" ");
+        }
+        return compressed;
+      }
+
+      function tokenizeForCompare(text) {
+        return String(text || "")
+          .toLowerCase()
+          .replace(/[.,;:，。；：/\\|()\[\]{}"'“”‘’!@#$%^&*+=?<>~`-]+/g, " ")
+          .replace(/\s+/g, " ")
+          .trim()
+          .split(" ")
+          .map(x => x.trim())
+          .filter(Boolean)
+          .filter(x => !STOP_WORDS.includes(x))
+          .filter(x => x.length > 1 || /[\u0600-\u06FF]/.test(x));
+      }
+
+      function compareDupes(versionKey = "A") {
+        const v = state.result[versionKey];
+        const titleTokens = new Set(tokenizeForCompare(v.title));
+        const bulletTokens = new Set(tokenizeForCompare((v.bullets || []).join(" ")));
+        const titleBulletSet = new Set([...titleTokens, ...bulletTokens]);
+        const stTokens = tokenizeForCompare(v.searchTermsCompressed || v.searchTerms);
+        const dupes = [];
+        const uniq = [];
+        stTokens.forEach(t => (titleBulletSet.has(t) ? dupes : uniq).push(t));
+
+        const dupeRatio = stTokens.length ? Math.round((dupes.length / stTokens.length) * 100) : 0;
+        $("dupeCompareOutput").innerHTML = `
+          <div class="mini-tag">当前版本：${versionKey}</div>
+          <div class="mini-tag">Search Terms 总词数：${stTokens.length}</div>
+          <div class="mini-tag">重复词数：${dupes.length}</div>
+          <div class="mini-tag">重复占比：${dupeRatio}%</div>
+          <div style="margin-top:10px;"><strong>重复词：</strong> ${dupes.length ? escapeHtml(dupes.join(", ")) : "无明显重复"}</div>
+          <div style="margin-top:10px;"><strong>保留词：</strong> ${uniq.length ? escapeHtml(uniq.join(", ")) : "无"}</div>
+        `;
+      }
+
+      function localComplianceCheck(versionKey) {
+        const v = state.result[versionKey];
+        const text = [v.title, ...(v.bullets || []), v.description, v.searchTerms, v.searchTermsCompressed].join("\n").toLowerCase();
+        const issues = [];
+        getMergedBlacklist().forEach(word => {
+          const re = new RegExp("\\b" + escapeRegExp(word) + "\\b", "ig");
+          if (re.test(text)) issues.push("发现敏感词：" + word);
+        });
+        BRAND_RISK.forEach(word => {
+          const re = new RegExp("\\b" + escapeRegExp(word) + "\\b", "ig");
+          if (re.test(text)) issues.push("发现潜在侵权品牌词：" + word);
+        });
+        if (EMOJI_REGEX.test(text)) issues.push("发现 emoji");
+
+        const limits = getLimits();
+        if ((v.title || "").length > limits.title) issues.push(`标题超限：${v.title.length}/${limits.title}`);
+        (v.bullets || []).forEach((b, i) => {
+          if ((b || "").length > limits.bullet) issues.push(`Bullet ${i+1} 超限：${b.length}/${limits.bullet}`);
+          if (b && !b.includes(":")) issues.push(`Bullet ${i+1} 未按“核心卖点标题 + 冒号 + 说明”格式输出`);
+        });
+        const bulletsTotal = (v.bullets || []).join("").length;
+        if (bulletsTotal > limits.bulletsTotal) issues.push(`5条 Bullet 总长度超限：${bulletsTotal}/${limits.bulletsTotal}`);
+        const stLen = (v.searchTermsCompressed || v.searchTerms || "").length;
+        if (stLen > limits.searchTerms) issues.push(`Search Terms 超限：${stLen}/${limits.searchTerms}`);
+
+        v.compliance = issues.length
+          ? "本地二次扫描发现以下风险：\n- " + issues.join("\n- ")
+          : "本地二次扫描未发现明显违禁词、侵权品牌词、emoji、Bullet 格式异常或字符超限问题。";
+      }
+
+      function renderVersion(versionKey) {
+        const v = state.result[versionKey];
+        $("titleOutput" + versionKey).textContent = v.title || "";
+        $("bulletOutput" + versionKey).textContent = (v.bullets || []).map((x, i) => `${i + 1}. ${x}`).join("\n\n");
+        $("descOutput" + versionKey).textContent = v.description || "";
+        $("stOutput" + versionKey).textContent = v.searchTerms || "";
+        $("insightOutput" + versionKey).textContent = v.insights || "";
+        $("complianceOutput" + versionKey).textContent = v.compliance || "";
+      }
+
+      function counterClass(current, limit) {
+        if (current > limit) return "err";
+        if (current > limit * 0.9) return "warn";
+        return "ok";
+      }
+
+      function makeCounterRow(name, current, limit) {
+        const percent = Math.min(100, Math.round((current / Math.max(limit,1)) * 100));
+        const cls = counterClass(current, limit);
+        return `
+          <div class="counter-item">
+            <div class="counter-head">
+              <div class="counter-title">${escapeHtml(name)}</div>
+              <div class="counter-num ${cls}">${current} / ${limit}</div>
+            </div>
+            <div class="bar"><span class="${cls}" style="width:${percent}%"></span></div>
+          </div>
+        `;
+      }
+
+      function updateCounters() {
+        const limits = getLimits();
+        ["A","B"].forEach(key => {
+          const v = state.result[key];
+          const titleLen = (v.title || "").length;
+          const bulletsTotal = (v.bullets || []).join("").length;
+          const stLen = (v.searchTermsCompressed || v.searchTerms || "").length;
+
+          $("titleLiveCount" + key).textContent = `${titleLen} / ${limits.title}`;
+          $("bulletLiveCount" + key).textContent = `${bulletsTotal} / ${limits.bulletsTotal}`;
+          $("termsLiveCount" + key).textContent = `${stLen} / ${limits.searchTerms}`;
+        });
+
+        const active = state.result[state.activeVersion];
+        let html = "";
+        html += makeCounterRow(`版本 ${state.activeVersion} 标题`, (active.title || "").length, limits.title);
+        (active.bullets || []).forEach((b, i) => {
+          html += makeCounterRow(`版本 ${state.activeVersion} Bullet ${i+1}`, (b || "").length, limits.bullet);
+        });
+        html += makeCounterRow(`版本 ${state.activeVersion} 5条 Bullet 总长`, (active.bullets || []).join("").length, limits.bulletsTotal);
+        html += makeCounterRow(`版本 ${state.activeVersion} Search Terms`, (active.searchTermsCompressed || active.searchTerms || "").length, limits.searchTerms);
+        $("counterWrap").innerHTML = html || '<div class="small">生成后将显示实时字符计数。</div>';
+      }
+
+      function renderAll() {
+        ["A","B"].forEach(key => {
+          state.result[key].searchTermsCompressed = compressSearchTerms(state.result[key].searchTerms || "");
+          localComplianceCheck(key);
+          renderVersion(key);
+        });
+        $("termsCompressedOutput").textContent = state.result[state.activeVersion].searchTermsCompressed || "";
+        compareDupes(state.activeVersion);
+        updateCounters();
+      }
+
+      function switchVersion(version) {
+        state.activeVersion = version;
+        document.querySelectorAll(".tab-btn").forEach(btn => {
+          btn.classList.toggle("active", btn.dataset.version === version);
+        });
+        $("termsCompressedOutput").textContent = state.result[version].searchTermsCompressed || "";
+        compareDupes(version);
+        updateCounters();
+      }
+
+      function collectAllText() {
+        const block = (k) => {
+          const v = state.result[k];
+          return [
+            `版本 ${k}`,
+            "Title", v.title || "",
+            "Bullets", ...(v.bullets || []).map((x,i)=>`${i+1}. ${x}`),
+            "Description", v.description || "",
+            "Search Terms", v.searchTerms || "",
+            "Search Terms Compressed", v.searchTermsCompressed || "",
+            "Insights", v.insights || "",
+            "Compliance", v.compliance || "",
+            ""
+          ].join("\n");
+        };
+        return [
+          block("A"),
+          block("B"),
+          "Prompt 预览",
+          state.prompt || "",
+          "",
+          "原始 API 响应",
+          state.raw || ""
+        ].join("\n");
+      }
+
+      function downloadText(name, text, type="text/plain;charset=utf-8") {
+        const blob = new Blob([text], { type });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = name;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      }
+
+      function toCsvCell(value) {
+        return `"${String(value ?? "").replace(/"/g, '""')}"`;
+      }
+
+      function exportCsv() {
+        const rows = [["版本","字段","内容"]];
+        ["A","B"].forEach(k => {
+          const v = state.result[k];
+          rows.push([k,"Title",v.title || ""]);
+          (v.bullets || []).forEach((b,i)=>rows.push([k,`Bullet ${i+1}`,b]));
+          rows.push([k,"Product Description HTML",v.description || ""]);
+          rows.push([k,"Search Terms",v.searchTerms || ""]);
+          rows.push([k,"Search Terms Compressed",v.searchTermsCompressed || ""]);
+          rows.push([k,"Competitor Insights",v.insights || ""]);
+          rows.push([k,"Compliance Scan",v.compliance || ""]);
+        });
+        const csv = "\uFEFF" + rows.map(r => r.map(toCsvCell).join(",")).join("\n");
+        downloadText("amazon-listing-generator-v2.1.1.csv", csv, "text/csv;charset=utf-8");
+      }
+
+      function exportXlsx() {
+        if (typeof XLSX === "undefined") {
+          alert("XLSX 库未加载成功，请检查网络或改为本地部署。");
+          return;
+        }
+
+        const wb = XLSX.utils.book_new();
+
+        ["A","B"].forEach(k => {
+          const v = state.result[k];
+          const rows = [
+            ["字段","内容"],
+            ["Title", v.title || ""],
+            ["Bullet 1", v.bullets?.[0] || ""],
+            ["Bullet 2", v.bullets?.[1] || ""],
+            ["Bullet 3", v.bullets?.[2] || ""],
+            ["Bullet 4", v.bullets?.[3] || ""],
+            ["Bullet 5", v.bullets?.[4] || ""],
+            ["Product Description HTML", v.description || ""],
+            ["Search Terms", v.searchTerms || ""],
+            ["Search Terms Compressed", v.searchTermsCompressed || ""],
+            ["Competitor Insights", v.insights || ""],
+            ["Compliance Scan", v.compliance || ""]
+          ];
+          const ws = XLSX.utils.aoa_to_sheet(rows);
+          XLSX.utils.book_append_sheet(wb, ws, `Version_${k}`);
+        });
+
+        const meta = [
+          ["品牌", $("brand").value.trim()],
+          ["项目", $("store").value.trim()],
+          ["语言", $("language").value],
+          ["站点", $("market").value],
+          ["类目", $("category").value],
+          ["模型", $("modelName").value.trim() || "gpt-5.4"],
+          ["Bullet 长度策略", $("bulletDensity").value],
+          ["Prompt", state.prompt || ""],
+          ["Raw Response", state.raw || ""]
+        ];
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(meta), "Meta");
+        XLSX.writeFile(wb, "amazon-listing-generator-v2.1.1.xlsx");
+      }
+
+      function exportJson() {
+        const data = {
+          brand: $("brand").value.trim(),
+          store: $("store").value.trim(),
+          language: $("language").value,
+          market: $("market").value,
+          category: $("category").value,
+          model: $("modelName").value.trim() || "gpt-5.4",
+          bulletDensity: $("bulletDensity").value,
+          limits: getLimits(),
+          prompt: state.prompt,
+          result: state.result,
+          rawResponse: state.raw
+        };
+        downloadText("amazon-listing-generator-v2.1.1.json", JSON.stringify(data, null, 2), "application/json;charset=utf-8");
+      }
+
+      function exportHtml() {
+        const html = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Amazon Listing Export V2.1.1</title>
+<style>
+body{font-family:Arial,"Microsoft YaHei",sans-serif;padding:24px;color:#222;line-height:1.7}
+h1,h2{margin:0 0 12px}
+.block{margin-bottom:28px}
+.box{border:1px solid #ddd;border-radius:10px;padding:16px;white-space:pre-wrap;word-break:break-word}
+</style>
+</head>
+<body>
+<h1>亚马逊 Listing 导出结果 V2.1.1</h1>
+<div class="block"><h2>基础信息</h2><div class="box">品牌：${escapeHtml($("brand").value.trim())}
+项目：${escapeHtml($("store").value.trim())}
+语言：${escapeHtml($("language").value)}
+站点：${escapeHtml($("market").value)}
+类目：${escapeHtml($("category").value)}
+模型：${escapeHtml($("modelName").value.trim() || "gpt-5.4")}
+Bullet 长度策略：${escapeHtml($("bulletDensity").value)}</div></div>
+${["A","B"].map(k => `
+<div class="block"><h2>版本 ${k}</h2><div class="box">
+Title:
+${escapeHtml(state.result[k].title || "")}
+
+Bullets:
+${escapeHtml((state.result[k].bullets || []).map((x,i)=>`${i+1}. ${x}`).join("\n\n"))}
+
+Description HTML:
+${escapeHtml(state.result[k].description || "")}
+
+Search Terms:
+${escapeHtml(state.result[k].searchTerms || "")}
+
+Search Terms Compressed:
+${escapeHtml(state.result[k].searchTermsCompressed || "")}
+
+Insights:
+${escapeHtml(state.result[k].insights || "")}
+
+Compliance:
+${escapeHtml(state.result[k].compliance || "")}
+</div></div>`).join("")}
+<div class="block"><h2>Prompt</h2><div class="box">${escapeHtml(state.prompt || "")}</div></div>
+<div class="block"><h2>Raw Response</h2><div class="box">${escapeHtml(state.raw || "")}</div></div>
+</body>
+</html>`;
+        downloadText("amazon-listing-generator-v2.1.1.html", html, "text/html;charset=utf-8");
+      }
+
+      async function generate(mode = "generate") {
+        try {
+          if (!$("apiKey").value.trim()) throw new Error("请先输入 POE API Key。");
+          setStatus("读取文件中...", "warn");
+          await loadAllFiles();
+
+          setStatus(mode === "rewrite" ? "构建重写 Prompt 中..." : "构建 Prompt 中...", "warn");
+          const prompt = buildPrompt(mode);
+
+          setStatus(mode === "rewrite" ? "多轮重写中..." : "调用 Poe API 中...", "warn");
+          const raw = await requestCompletion(prompt);
+
+          setStatus("解析结果中...", "warn");
+          parseModelOutput(raw);
+          renderAll();
+
+          setStatus(mode === "rewrite" ? "重写完成" : "生成完成", "ok");
+        } catch (err) {
+          console.error(err);
+          setStatus(mode === "rewrite" ? "重写失败" : "生成失败", "err");
+          $("rawOutput").textContent = String(err.message || err);
+        }
+      }
+
+      function bind() {
+        $("fileInput").addEventListener("change", e => {
+          const files = Array.from(e.target.files || []);
+          files.forEach(f => state.files[f.name] = f);
+          renderFileList();
+          updateStatusTable();
+        });
+
+        ["apiKey","language","market","category"].forEach(id => {
+          $(id).addEventListener("input", () => {
+            updateStatusTable();
+            renderRulesPanel();
+            updateCounters();
+          });
+          $(id).addEventListener("change", () => {
+            updateStatusTable();
+            renderRulesPanel();
+            updateCounters();
+          });
+        });
+
+        $("bulletDensity").addEventListener("change", () => {
+          if (state.prompt) buildPrompt("generate");
+        });
+
+        const dz = $("dropzone");
+        ["dragenter","dragover"].forEach(ev => {
+          dz.addEventListener(ev, e => {
+            e.preventDefault();
+            dz.classList.add("dragover");
+          });
+        });
+        ["dragleave","drop"].forEach(ev => {
+          dz.addEventListener(ev, e => {
+            e.preventDefault();
+            dz.classList.remove("dragover");
+          });
+        });
+        dz.addEventListener("drop", e => {
+          const files = Array.from(e.dataTransfer.files || []);
+          files.forEach(f => state.files[f.name] = f);
+          renderFileList();
+          updateStatusTable();
+        });
+
+        $("buildPromptBtn").addEventListener("click", async () => {
+          try {
+            if (Object.keys(state.files).length) await loadAllFiles();
+            buildPrompt("generate");
+            setStatus("Prompt 已生成", "ok");
+          } catch (err) {
+            setStatus("Prompt 生成失败", "err");
+            $("promptOutput").textContent = String(err.message || err);
+          }
+        });
+
+        $("runBtn").addEventListener("click", () => generate("generate"));
+        $("rewriteBtn").addEventListener("click", () => generate("rewrite"));
+
+        $("compressTermsBtn").addEventListener("click", () => {
+          ["A","B"].forEach(k => {
+            state.result[k].searchTermsCompressed = compressSearchTerms(state.result[k].searchTerms || "");
+            localComplianceCheck(k);
+            renderVersion(k);
+          });
+          $("termsCompressedOutput").textContent = state.result[state.activeVersion].searchTermsCompressed || "";
+          compareDupes(state.activeVersion);
+          updateCounters();
+          setStatus("Search Terms 已压缩", "ok");
+        });
+
+        $("copyAllBtn").addEventListener("click", async () => {
+          try {
+            await navigator.clipboard.writeText(collectAllText());
+            setStatus("已复制全部结果", "ok");
+          } catch {
+            setStatus("复制失败", "err");
+          }
+        });
+
+        $("exportCsvBtn").addEventListener("click", exportCsv);
+        $("exportXlsxBtn").addEventListener("click", exportXlsx);
+        $("exportHtmlBtn").addEventListener("click", exportHtml);
+        $("exportJsonBtn").addEventListener("click", exportJson);
+        $("downloadTxtBtn").addEventListener("click", () => {
+          downloadText("amazon-listing-generator-v2.1.1.txt", collectAllText());
+        });
+
+        document.querySelectorAll(".tab-btn").forEach(btn => {
+          btn.addEventListener("click", () => switchVersion(btn.dataset.version));
+        });
+
+        $("clearBtn").addEventListener("click", () => {
+          state.files = {};
+          state.texts = {};
+          state.prompt = "";
+          state.rawStreamText = "";
+          state.activeVersion = "A";
+          state.result = {
+            A: { title:"", bullets:[], description:"", searchTerms:"", searchTermsCompressed:"", insights:"", compliance:"" },
+            B: { title:"", bullets:[], description:"", searchTerms:"", searchTermsCompressed:"", insights:"", compliance:"" }
+          };
+          state.raw = "";
+
+          ["brand","store","customNotes","extraBlacklist","apiKey"].forEach(id => $(id).value = "");
+          $("language").value = "English";
+          $("market").value = "US";
+          $("category").value = "default";
+          $("modelName").value = "gpt-5.4";
+          $("useStreaming").value = "yes";
+          $("abMode").value = "ab";
+          $("temperature").value = "0.4";
+          $("rewriteTarget").value = "title";
+          $("bulletDensity").value = "full";
+          $("fileInput").value = "";
+
+          [
+            "promptOutput","rawOutput","streamOutput","termsCompressedOutput","dupeCompareOutput",
+            "titleOutputA","bulletOutputA","descOutputA","stOutputA","insightOutputA","complianceOutputA",
+            "titleOutputB","bulletOutputB","descOutputB","stOutputB","insightOutputB","complianceOutputB"
+          ].forEach(id => $(id).textContent = "");
+
+          renderFileList();
+          renderRulesPanel();
+          updateCounters();
+          updateStatusTable();
+          switchVersion("A");
+        });
+
+        $("demoBtn").addEventListener("click", async () => {
+          $("brand").value = "TERUNSOUl";
+          $("store").value = "US Dash Cam Project";
+          $("customNotes").value = "标题控制在180字符内；5条Bullet采用核心卖点标题+冒号+说明格式；尽量接近字符上限但不要堆砌；突出4K+4K双录、夜视、GPS、5.8GHz WiFi、停车监控与128GB卡随附。";
+          $("extraBlacklist").value = "best dash cam\n100% safe";
+          $("language").value = "English";
+          $("market").value = "US";
+          $("category").value = "default";
+          $("modelName").value = "gpt-5.4";
+          $("bulletDensity").value = "full";
+
+          const demoFiles = {
+            "本品属性表.txt": `Brand: TERUNSOUl
+Model: D016
+Resolution: 4K Front + 4K Rear
+WiFi: 5.8GHz + 2.4GHz
+GPS: Built-in
+Screen: 3-inch IPS
+Angle: 170°
+Parking Mode: 24H, hardwire kit required
+Storage: Free 128GB card included, supports up to 512GB
+Night Vision: WDR, F1.5 front aperture, F1.8 rear aperture
+Included Accessories: Rear extension cable, USB-C car charger, GPS suction mount, cable clips, trim tool, electrostatic films, cleaning pads
+Warranty: 18 months
+Support: 24/7 customer support`,
+            "竞品Listing文本.txt": `Competitor 1
+Title: 4K Dash Cam Front and Rear with GPS, WiFi, Night Vision, Parking Monitor
+Review Pros: clear day footage, helpful app, easy install
+Review Cons: weak night detail, app disconnects sometimes
+
+Competitor 2
+Title: Dual Dash Camera for Cars with G-Sensor and Loop Recording
+Review Pros: affordable, wide angle, included SD card
+Review Cons: rear image not sharp enough, setup instructions unclear
+
+Competitor 3
+Title: Car Dash Cam 4K Front Rear with Parking Mode and GPS
+Review Pros: accurate GPS logging, stable mount
+Review Cons: parking mode needs extra kit, menu is basic`,
+            "竞品出单词报告.csv": `term,count
+dash cam front and rear,62
+4k dash cam,55
+car camera,32
+night vision dash cam,28
+parking monitor,25
+gps dash cam,23
+wifi dash cam,19`,
+            "ABA关键词数据.csv": `keyword,rank,search frequency
+dash cam front and rear,2,1680
+4k dash cam front and rear,4,1420
+dash camera for cars,6,1270
+car dash cam with gps,11,920
+wifi dash cam,17,730
+parking mode dash cam,25,610`
+          };
+
+          state.files = {};
+          Object.entries(demoFiles).forEach(([name, content]) => {
+            const blob = new Blob([content], { type: "text/plain" });
+            const file = new File([blob], name, { type: "text/plain" });
+            state.files[name] = file;
+          });
+
+          renderFileList();
+          updateStatusTable();
+          renderRulesPanel();
+          await loadAllFiles();
+          buildPrompt("generate");
+          setStatus("演示数据已加载", "ok");
+        });
+      }
+
+      bind();
+      renderRulesPanel();
+      updateCounters();
+      updateStatusTable();
+      switchVersion("A");
+    })();
+  </script>
+</body>
+</html>
